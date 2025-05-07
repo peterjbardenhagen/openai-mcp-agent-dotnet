@@ -52,6 +52,64 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.15.0' = {
   }
 }
 
+// API Management
+module apiManagement 'br/public:avm/res/api-management/service:0.9.1' = {
+  name: 'apimanagement'
+  params: {
+    name: '${abbrs.apiManagementService}${resourceToken}'
+    location: location
+    tags: tags
+    publisherName: 'MCP Todo Agent'
+    publisherEmail: 'mcp-todo@contoso.com'
+    sku: 'Consumption'
+    managedIdentities: {
+      systemAssigned: false
+      userAssignedResourceIds: [
+        mcpTodoClientAppIdentity.outputs.resourceId
+      ]
+    }
+  }
+}
+
+module apimProduct './modules/apim-product.bicep' = {
+  name: 'apimanagement-product'
+  params: {
+    name: apiManagement.outputs.name
+    productName: 'default'
+    productDisplayName: 'default'
+    productDescription: 'Default product'
+    productSubscriptionRequired: false
+  }
+}
+
+module apimSubscription './modules/apim-subscription.bicep' = {
+  name: 'apimanagement-subscription'
+  params: {
+    name: apiManagement.outputs.name
+    productName: apimProduct.outputs.name
+    subscriptionName: 'default'
+    subscriptionDisplayName: 'Default subscription'
+  }
+}
+
+module apimApi './modules/apim-api.bicep' = {
+  name: 'apimanagement-api'
+  params: {
+    name: apiManagement.outputs.name
+    apiName: 'mcp-server'
+    apiDisplayName: 'MCP Server'
+    apiDescription: 'API for MCP Server'
+    apiServiceUrl: 'https://${mcpTodoServerApp.outputs.fqdn}'
+    apiPath: 'mcp-server'
+    apiSubscriptionRequired: false
+    apiFormat: 'openapi+json'
+    apiValue: loadTextContent('./apis/openapi.json')
+  }
+  dependsOn: [
+    apimProduct
+  ]
+}
+
 // Container registry
 module containerRegistry 'br/public:avm/res/container-registry/registry:0.6.0' = {
   name: 'registry'
@@ -193,8 +251,25 @@ module mcpTodoClientAppFetchLatestImage './modules/fetch-container-image.bicep' 
   }
 }
 
+// resource apim 'Microsoft.ApiManagement/service@2024-06-01-preview' existing = {
+//   name: '${abbrs.apiManagementService}${resourceToken}'
+//   dependsOn: [
+//     apiManagement
+//   ]
+// }
+// resource apimp 'Microsoft.ApiManagement/service/products@2024-06-01-preview' existing = {
+//   name: 'default'
+//   parent: apim
+//   dependsOn: [
+//     apimApi
+//   ]
+// }
+
 module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
   name: 'mcpTodoClientApp'
+//   dependsOn: [
+//     apimp
+//   ]
   params: {
     name: 'mcptodo-clientapp'
     ingressTargetPort: 8080
@@ -207,6 +282,14 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
         name: 'connectionstrings-openai'
         value: openAIConnectionString
       }
+    //   {
+    //     name: 'apim-subscription-key'
+    //     value: listSecrets(resourceId('Microsoft.ApiManagement/service/subscriptions', '${abbrs.apiManagementService}${resourceToken}', 'default'), '2024-06-01-preview').primaryKey
+    //   }
+    //   {
+    //     name: 'apim-subscription-key'
+    //     value: apimp.listSecrets().primaryKey
+    //   }
     ]
     containers: [
       {
@@ -229,6 +312,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'PORT'
             value: '8080'
           }
+        //   {
+        //     name: 'McpServers__TodoList'
+        //     value: 'https://${apiManagement.outputs.name}.azure-api.net/mcp-server'
+        //   }
           {
             name: 'McpServers__TodoList'
             value: 'https://${mcpTodoServerApp.outputs.fqdn}'
@@ -237,6 +324,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'ConnectionStrings__OpenAI'
             secretRef: 'connectionstrings-openai'
           }
+        //   {
+        //     name: 'APIM__SubscriptionKey'
+        //     secretRef: 'apim-subscription-key'
+        //   }
         ]
       }
     ]
