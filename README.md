@@ -8,7 +8,9 @@ This app provides features like:
 
 - It is an MCP host + MCP client app written in .NET Blazor.
 - The MCP client app connects to a to-do MCP server written in TypeScript.
-- The MCP client app connects to any MCP server through Azure API Management.
+- Both MCP client and server apps are running on [Azure Container Apps (ACA)](https://learn.microsoft.com/azure/container-apps/overview).
+- The MCP client app is secured by the built-in auth of ACA.
+- The MCP server app is not publicly accessible.
 
 ![Overall architecture diagram](./images/overall-architecture-diagram.png)
 
@@ -108,7 +110,7 @@ This app provides features like:
     podman compose up --build
     ```
 
-1. Navigate to `https://localhost:8080` and enter prompts like:
+1. Navigate to `http://localhost:8080` and enter prompts like:
 
     ```text
     Give me list of to do.
@@ -153,4 +155,6 @@ This app provides features like:
 
 ## Resources
 
-TBD
+- [Model Context Protocol (MCP) C# SDK](https://github.com/modelcontextprotocol/csharp-sdk)
+- [MCP .NET samples](https://github.com/microsoft/mcp-dotnet-samples)
+- [MCP Todo app in TypeScript](https://github.com/Azure-Samples/mcp-container-ts)
