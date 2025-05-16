@@ -1,12 +1,9 @@
 <!--
 --- 
 name: .NET OpenAI MCP Agent
-description: This is an MCP agent app written in .NET, using Azure OpenAI, with a remote MCP server written in TypeScript.
+description: This is an MCP agent app written in .NET, using OpenAI, with a remote MCP server written in TypeScript.
 languages:
-- javascript
-- typescript
-- nodejs
-- dotnet
+- csharp
 - bicep
 - azdeveloper
 products:
@@ -17,6 +14,7 @@ page_type: sample
 urlFragment: openai-mcp-agent-dotnet
 --- 
 -->
+
 # .NET OpenAI MCP Agent
 
 This is an MCP agent app written in .NET, using Azure OpenAI, with a remote MCP server written in TypeScript.
