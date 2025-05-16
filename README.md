@@ -68,7 +68,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 1. Clone the MCP server.
 
     ```bash
-    cd openai-mcp-agent-dotnet
     git clone https://github.com/Azure-Samples/mcp-container-ts.git ./src/McpTodo.ServerApp
     ```
 
