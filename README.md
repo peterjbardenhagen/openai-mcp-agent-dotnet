@@ -121,17 +121,6 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 ### Run it locally
 
 1. Make sure you're in the `openai-mcp-agent-dotnet` directory.
-1. Make sure that your deployed model name is `gpt-4o`. If your deployed model is different, update `src/McpTodo.ClientApp/appsettings.json`.
-
-    ```jsonc
-    {
-      "OpenAI": {
-        // Make sure this is the right deployment name.
-        "DeploymentName": "gpt-4o"
-      }
-    }
-    ```
-
 1. Add Azure OpenAI API Key.
 
     ```bash
