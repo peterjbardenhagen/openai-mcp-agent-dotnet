@@ -14,9 +14,6 @@
       "mcpTodoServerAppExists": {
         "value": "${SERVICE_MCPTODO_SERVERAPP_RESOURCE_EXISTS=false}"
       },
-      "principalId": {
-        "value": "${AZURE_PRINCIPAL_ID}"
-      },
       "useLogin": {
         "value": "${USE_LOGIN=true}"
       },
