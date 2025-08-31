@@ -92,7 +92,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 1. Set JWT token.
 
     ```bash
-    # bash/zsh
+    # zsh/bash
     ./scripts/set-jwttoken.sh
     ```
 
@@ -116,7 +116,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 1. Add JWT token to azd environment.
 
     ```bash
-    # bash/zsh
+    # zsh/bash
     env_dir=".azure/$(azd env get-value AZURE_ENV_NAME)"
     mkdir -p "$env_dir"
     cat ./src/McpTodo.ServerApp/.env >> "$env_dir/.env"
@@ -213,7 +213,7 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
 1. Export user secrets to `.env`.
 
     ```bash
-    # bash/zsh
+    # zsh/bash
     dotnet user-secrets list --project src/McpTodo.ClientApp \
         | sed 's/ConnectionStrings:openai/ConnectionStrings__openai/' \
         | sed 's/McpServers:JWT:Token/McpServers__JWT__Token/' > .env
