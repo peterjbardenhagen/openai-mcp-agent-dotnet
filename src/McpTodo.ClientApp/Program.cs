@@ -1,73 +1,59 @@
 using System.ClientModel;
 
-using Azure.AI.OpenAI;
-
-using McpTodo.ClientApp;
 using McpTodo.ClientApp.Components;
 
-using Microsoft.Extensions.AI;
-
-using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol;
-
 using OpenAI;
+using OpenAI.Responses;
+
+#pragma warning disable OPENAI001
 
 var builder = WebApplication.CreateBuilder(args);
-
 var config = builder.Configuration;
-var connectionstring = config.GetConnectionString("openai") ?? throw new InvalidOperationException("Missing connection string: openai.");
-var endpoint = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Endpoint=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                   ?? throw new InvalidOperationException("Missing endpoint.");
-var apiKey = connectionstring.Split(';').FirstOrDefault(x => x.StartsWith("Key=", StringComparison.InvariantCultureIgnoreCase))?.Split('=')[1]
-                 ?? throw new InvalidOperationException("Missing API key.");
-
-builder.AddServiceDefaults();
 
 builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-var credential = new ApiKeyCredential(apiKey);
-var openAIOptions = new OpenAIClientOptions()
+builder.Services.AddScoped<OpenAIResponseClient>(sp =>
 {
-    Endpoint = new Uri(endpoint),
-};
+    string? endpoint = config["OpenAI:Endpoint"]?.TrimEnd('/');
+    OpenAIClientOptions? openAIOptions = string.IsNullOrWhiteSpace(endpoint) == true
+        ? null
+        : (endpoint.TrimEnd('/').EndsWith(".openai.azure.com") == true
+              ? new() { Endpoint = new Uri($"{endpoint}/openai/v1/") }
+              : throw new InvalidOperationException("Invalid Azure OpenAI endpoint.")
+          );
 
-var openAIClient = Constants.GitHubModelEndpoints.Contains(endpoint.TrimEnd('/'))
-                   ? new OpenAIClient(credential, openAIOptions)
-                   : new AzureOpenAIClient(new Uri(endpoint), credential);
-var chatClient = openAIClient.GetChatClient(config["OpenAI:DeploymentName"]).AsIChatClient();
+    string? apiKey = string.IsNullOrWhiteSpace(config["OpenAI:ApiKey"]) == false
+                   ? config["OpenAI:ApiKey"]!.Trim()
+                   : throw new InvalidOperationException("Missing API key.");
+    ApiKeyCredential credential = new(apiKey);
 
-builder.Services.AddChatClient(chatClient)
-                .UseFunctionInvocation()
-                .UseLogging();
+    string? model = config["OpenAI:DeploymentName"]?.Trim() ?? "gpt-5-mini";
+    OpenAIResponseClient responseClient = openAIOptions == null
+        ? new(model, credential)
+        : new(model, credential, openAIOptions);
 
-builder.Services.AddSingleton<McpClient>(sp =>
+    return responseClient;
+});
+
+builder.Services.AddSingleton<ResponseCreationOptions>(sp =>
 {
-    var config = sp.GetRequiredService<IConfiguration>();
-    var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
+    string? serverUri = config["McpServers:TodoList"]?.TrimEnd('/') ?? throw new InvalidOperationException("Missing MCP server URL.");
+    string? authorizationToken = config["McpServers:JWT:Token"]?.Trim() ?? throw new InvalidOperationException("Missing MCP server JWT token.");
 
-    var uri = new Uri(config["McpServers:TodoList"]!);
-
-    var clientTransportOptions = new HttpClientTransportOptions()
+    ResponseCreationOptions options = new()
     {
-        Endpoint = new Uri($"{uri.AbsoluteUri.TrimEnd('/')}/mcp"),
-        AdditionalHeaders = new Dictionary<string, string>
-        {
-            { "Authorization", $"Bearer {config["McpServers:JWT:Token"]!}" }
+        Tools = {
+            ResponseTool.CreateMcpTool(
+                serverLabel: "TodoList",
+                serverUri: new Uri($"{serverUri}/mcp"),
+                authorizationToken: authorizationToken,
+                toolCallApprovalPolicy: new McpToolCallApprovalPolicy(GlobalMcpToolCallApprovalPolicy.NeverRequireApproval)
+            )
         }
     };
-    var clientTransport = new HttpClientTransport(clientTransportOptions, loggerFactory);
 
-    var clientOptions = new McpClientOptions()
-    {
-        ClientInfo = new Implementation()
-        {
-            Name = "MCP Todo Client",
-            Version = "1.0.0",
-        }
-    };
-
-    return McpClient.CreateAsync(clientTransport, clientOptions, loggerFactory).GetAwaiter().GetResult();
+    return options;
 });
 
 var app = builder.Build();
@@ -78,15 +64,13 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
-app.UseHttpsRedirection();
 app.UseAntiforgery();
 
 app.UseStaticFiles();
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
-
-app.MapDefaultEndpoints();
 
 app.Run();
