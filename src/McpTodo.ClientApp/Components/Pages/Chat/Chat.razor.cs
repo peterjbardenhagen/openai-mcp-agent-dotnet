@@ -1,10 +1,10 @@
 ﻿#pragma warning disable OPENAI001
 
 using McpTodo.ClientApp.Extensions;
+using McpTodo.ClientApp.Models;
 
 using Microsoft.AspNetCore.Components;
 
-using OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
@@ -34,7 +34,7 @@ public partial class Chat : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        messages.Add(new SystemChatMessage(SystemPrompt));
+        messages.Add(new (ChatRole.System, SystemPrompt));
         responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));
 
         await Task.CompletedTask;
@@ -46,26 +46,24 @@ public partial class Chat : ComponentBase, IDisposable
 
         // Add the user message to the conversation
         messages.Add(userMessage);
-        responseItems.Add(ResponseItem.CreateUserMessageItem(userMessage.Content[0].Text));
+        responseItems.Add(ResponseItem.CreateUserMessageItem(userMessage.Text));
 
         chatSuggestions?.Clear();
         await chatInput!.FocusAsync();
 
-        var responseText = ChatMessageContentPart.CreateTextPart("");
-        currentResponseMessage = new AssistantChatMessage(responseText);
+        var responseText = string.Empty;
+        currentResponseMessage = new ChatMessage(ChatRole.Assistant, responseText);
         currentResponseCancellation = new();
 
         await foreach (var update in ResponseClient.CreateResponseStreamingAsync(responseItems, ResponseOptions, currentResponseCancellation.Token))
         {
-            if (update is StreamingResponseOutputTextDeltaUpdate delta)
-            {
-                responseText = ChatMessageContentPart.CreateTextPart(responseText.Text + delta.Delta);
-                ChatMessageItem.NotifyChanged(currentResponseMessage);
-            }
+            responseText += responseItems.AddResponse(update);
+            ChatMessageItem.NotifyChanged(currentResponseMessage);
         }
 
         // Store the final response in the conversation, and begin getting suggestions
-        messages.Add(currentResponseMessage!);
+        currentResponseMessage.Content = [ responseText ];
+        messages.Add(currentResponseMessage);
         currentResponseMessage = null;
         chatSuggestions?.Update(messages);
     }
@@ -86,7 +84,7 @@ public partial class Chat : ComponentBase, IDisposable
     {
         CancelAnyCurrentResponse();
         messages.Clear();
-        messages.Add(new SystemChatMessage(SystemPrompt));
+        messages.Add(new(ChatRole.System, SystemPrompt));
 
         responseItems.Clear();
         responseItems.Add(ResponseItem.CreateSystemMessageItem(SystemPrompt));

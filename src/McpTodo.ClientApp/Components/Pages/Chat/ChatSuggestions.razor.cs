@@ -1,8 +1,9 @@
 #pragma warning disable OPENAI001
 
+using McpTodo.ClientApp.Models;
+
 using Microsoft.AspNetCore.Components;
 
-using OpenAI.Chat;
 using OpenAI.Responses;
 
 namespace McpTodo.ClientApp.Components.Pages.Chat;
@@ -20,6 +21,7 @@ public partial class ChatSuggestions : ComponentBase
         Each suggestion must be a complete sentence, maximum 6 words.
         Each suggestion must be phrased as something that I (the user) would ask you (the assistant) in response to your previous message,
         for example 'How do I do that?' or 'Explain ...'.
+        Every suggestion must be relevant to to-do list management and the context of our conversation so far.
         If there are no suggestions, reply with an empty list.
     ";
 
@@ -51,30 +53,34 @@ public partial class ChatSuggestions : ComponentBase
             List<ResponseItem> responseItems = [];
             foreach (var message in messages)
             {
-                if (message is SystemChatMessage)
+                if (message.Role == ChatRole.System)
                 {
-                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateSystemMessageItem(message.Text));
                 }
-                else if (message is UserChatMessage)
+                else if (message.Role == ChatRole.User)
                 {
-                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateUserMessageItem(message.Text));
                 }
-                else if (message is AssistantChatMessage)
+                else if (message.Role == ChatRole.Assistant)
                 {
-                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Content[0].Text));
+                    responseItems.Add(ResponseItem.CreateAssistantMessageItem(message.Text));
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Unknown role: {message.GetType()}");
+                    throw new InvalidOperationException($"Unknown role: {message.Role}");
                 }
             }
 
+            var reducedMessages = ReduceMessages(responseItems);
             var response = await ResponseClient.CreateResponseAsync([
-                .. ReduceMessages(responseItems),
+                .. reducedMessages,
                 ResponseItem.CreateUserMessageItem(Prompt)
             ], cancellationToken: cancellation.Token);
 
-            // suggestions = [.. response.Value.OutputItems.Select(m => m Text)];
+            suggestions = [.. response.Value.GetOutputText()
+                                      .Split([ '\n', '\r' ], StringSplitOptions.RemoveEmptyEntries)
+                                      .Select(s => s.Trim())
+                                      .Where(s => !string.IsNullOrWhiteSpace(s))];
 
             StateHasChanged();
         }
@@ -86,7 +92,7 @@ public partial class ChatSuggestions : ComponentBase
 
     private async Task AddSuggestionAsync(string text)
     {
-        await OnSelected.InvokeAsync(new UserChatMessage(text));
+        await OnSelected.InvokeAsync(new(ChatRole.User, text));
     }
 
     private IEnumerable<ResponseItem> ReduceMessages(IReadOnlyList<ResponseItem> responseItems)
