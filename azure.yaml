@@ -34,12 +34,17 @@ hooks:
         SERVER_DIR="$REPOSITORY_ROOT/src/McpTodo.ServerApp"
         CLIENT_DIR="$REPOSITORY_ROOT/src/McpTodo.ClientApp"
 
+        if [ -d "$SERVER_DIR" ]; then
+          echo "Directory $SERVER_DIR already exists. Removing it before cloning..."
+          rm -rf "$SERVER_DIR"
+        fi
+
         git clone https://github.com/Azure-Samples/mcp-container-ts.git "$SERVER_DIR"
 
-        pushd "$SERVER_DIR"
+        cd "$SERVER_DIR"
         npm install
         npm run generate-token -- --admin
-        popd
+        cd "$REPOSITORY_ROOT"
 
         ENV_DIR="$REPOSITORY_ROOT/.azure/$(azd env get-value AZURE_ENV_NAME)"
         cat "$SERVER_DIR/.env" >> "$ENV_DIR/.env"
@@ -53,12 +58,17 @@ hooks:
         $SERVER_DIR = "$REPOSITORY_ROOT/src/McpTodo.ServerApp"
         $CLIENT_DIR = "$REPOSITORY_ROOT/src/McpTodo.ClientApp"
 
+        if (Test-Path $SERVER_DIR) {
+          Write-Host "Directory $SERVER_DIR already exists. Removing it before cloning..."
+          Remove-Item -Recurse -Force $SERVER_DIR
+        }
+
         git clone https://github.com/Azure-Samples/mcp-container-ts.git "$SERVER_DIR"
 
-        pushd $SERVER_DIR
+        cd "$SERVER_DIR"
         npm install
         npm run generate-token -- --admin
-        popd
+        cd "$REPOSITORY_ROOT"
 
         $ENV_DIR = "$REPOSITORY_ROOT/.azure/$(azd env get-value AZURE_ENV_NAME)"
         Get-Content "$SERVER_DIR/.env" | Add-Content -Path "$ENV_DIR/.env" -Encoding utf8 -Force
