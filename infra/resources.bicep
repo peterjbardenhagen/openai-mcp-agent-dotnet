@@ -301,11 +301,16 @@ module mcpTodoClientAppIdentity 'br/public:avm/res/managed-identity/user-assigne
   }
 }
 
+resource mcpTodoClientAppIdentityInstance 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: mcpTodoClientAppIdentity.outputs.name
+}
+
 module mcpTodoClientAppIdentityRoleAssignment './modules/role-assignment.bicep' = if (useLogin == true) {
   name: 'mcpTodoClientAppIdentityRoleAssignment'
   params: {
     managedIdentityName: mcpTodoClientAppIdentity.outputs.name
     storageAccountName: storageAccount.outputs.name
+    aifAccountName: openAI.name
     principalType: 'ServicePrincipal'
   }
 }
@@ -329,10 +334,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
       maxReplicas: 10
     }
     secrets: [
-      {
-        name: 'openai-api-key'
-        value: openAI.listKeys().key1
-      }
+    //   {
+    //     name: 'openai-api-key'
+    //     value: openAI.listKeys().key1
+    //   }
       {
         name: 'jwt-token'
         value: jwtToken
@@ -367,10 +372,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'OpenAI__Endpoint'
             value: openAI.properties.endpoint
           }
-          {
-            name: 'OpenAI__ApiKey'
-            secretRef: 'openai-api-key'
-          }
+        //   {
+        //     name: 'OpenAI__ApiKey'
+        //     secretRef: 'openai-api-key'
+        //   }
           {
             name: 'OpenAI__DeploymentName'
             value: gptModelDeployment.properties.model.name
