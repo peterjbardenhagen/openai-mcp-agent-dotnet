@@ -102,6 +102,12 @@ You can now use GitHub Codespaces to run this sample app (takes several minutes 
    >    azd env set GPT_MODEL_NAME <azure-openai-model-name>
    >    ```
    >
+   > 1. By default, the MCP server app is production mode. You can change it to the development mode that shows more detailed logs by setting:
+   >
+   >    ```bash
+   >    azd env set ENABLE_MCP_SERVER_DEVELOPMENT_MODE true
+   >    ```
+   >
    > 1. During the deployment,
    >    - You will be asked to enter the Azure Subscription and two locations - one for Azure AI Foundry and the other for the rest of resources.
 

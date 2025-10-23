@@ -59,6 +59,9 @@ param jwtSecret string = ''
 @secure()
 param jwtToken string = ''
 
+@description('Enable development mode for MCP server')
+param enableMcpServerDevelopmentMode bool
+
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
 
@@ -239,7 +242,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: json('0.5')
           memory: '1.0Gi'
         }
-        env: [
+        env: concat([
           {
             name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
             value: monitoring.outputs.applicationInsightsConnectionString
@@ -272,7 +275,12 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'JWT_TOKEN'
             secretRef: 'jwt-token'
           }
-        ]
+        ], enableMcpServerDevelopmentMode == true ? [
+          {
+            name: 'NODE_ENV'
+            value: 'development'
+          }
+        ] : [])
       }
     ]
     managedIdentities: {
@@ -299,10 +307,6 @@ module mcpTodoClientAppIdentity 'br/public:avm/res/managed-identity/user-assigne
     name: '${abbrs.managedIdentityUserAssignedIdentities}mcptodoclientapp-${resourceToken}'
     location: location
   }
-}
-
-resource mcpTodoClientAppIdentityInstance 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
-  name: mcpTodoClientAppIdentity.outputs.name
 }
 
 module mcpTodoClientAppIdentityRoleAssignment './modules/role-assignment.bicep' = if (useLogin == true) {
@@ -334,6 +338,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
       maxReplicas: 10
     }
     secrets: [
+      {
+        name: 'openai-endpoint'
+        value: openAI.properties.endpoint
+      }
     //   {
     //     name: 'openai-api-key'
     //     value: openAI.listKeys().key1
@@ -370,7 +378,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'OpenAI__Endpoint'
-            value: openAI.properties.endpoint
+            secretRef: 'openai-endpoint'
           }
         //   {
         //     name: 'OpenAI__ApiKey'
