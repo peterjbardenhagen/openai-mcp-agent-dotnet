@@ -59,6 +59,9 @@ param jwtSecret string = ''
 @secure()
 param jwtToken string = ''
 
+@description('Enable development mode for MCP server')
+param enableMcpServerDevelopmentMode bool
+
 param mcpServerIngressPort int = 3000
 param mcpClientIngressPort int = 8080
 
@@ -239,7 +242,7 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: json('0.5')
           memory: '1.0Gi'
         }
-        env: [
+        env: concat([
           {
             name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
             value: monitoring.outputs.applicationInsightsConnectionString
@@ -272,7 +275,12 @@ module mcpTodoServerApp 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'JWT_TOKEN'
             secretRef: 'jwt-token'
           }
-        ]
+        ], enableMcpServerDevelopmentMode == true ? [
+          {
+            name: 'NODE_ENV'
+            value: 'development'
+          }
+        ] : [])
       }
     ]
     managedIdentities: {

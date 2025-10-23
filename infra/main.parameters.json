@@ -23,6 +23,9 @@
       "gptModelName": {
         "value": "${GPT_MODEL_NAME=gpt-5-mini}"
       },
+      "enableMcpServerDevelopmentMode": {
+        "value": "${ENABLE_MCP_SERVER_DEVELOPMENT_MODE=false}"
+      },
       "mcpServerIngressPort": {
         "value": "${MCP_SERVER_INGRESS_PORT=3000}"
       },

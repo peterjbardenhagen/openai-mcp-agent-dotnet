@@ -29,6 +29,9 @@ param location string
 })
 param aifLocation string
 
+@description('Enable development mode for MCP server')
+param enableMcpServerDevelopmentMode bool
+
 param mcpTodoServerAppExists bool
 param mcpTodoClientAppExists bool
 
@@ -106,6 +109,7 @@ module resources 'resources.bicep' = {
     jwtExpiry: jwtExpiry
     jwtSecret: jwtSecret
     jwtToken: jwtToken
+    enableMcpServerDevelopmentMode: enableMcpServerDevelopmentMode
     mcpServerIngressPort: mcpServerIngressPort
     mcpClientIngressPort: mcpClientIngressPort
     mcpServerIngressExternal: true
