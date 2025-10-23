@@ -330,6 +330,10 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
     }
     secrets: [
       {
+        name: 'openai-endpoint'
+        value: openAI.properties.endpoint
+      }
+      {
         name: 'openai-api-key'
         value: openAI.listKeys().key1
       }
@@ -365,7 +369,7 @@ module mcpTodoClientApp 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'OpenAI__Endpoint'
-            value: openAI.properties.endpoint
+            secretRef: 'openai-endpoint'
           }
           {
             name: 'OpenAI__ApiKey'

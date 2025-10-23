@@ -17,6 +17,9 @@ public partial class Chat : ComponentBase, IDisposable
     [Inject]
     public ResponseCreationOptions ResponseOptions { get; set; } = null!;
 
+    [Inject]
+    public ILogger<Chat> Logger { get; set; } = null!;
+
     private const string SystemPrompt = @"
         You are an assistant who manages to-do list items.
         If the question is not clear, ask for clarification.
@@ -55,11 +58,16 @@ public partial class Chat : ComponentBase, IDisposable
         currentResponseMessage = new ChatMessage(ChatRole.Assistant, responseText);
         currentResponseCancellation = new();
 
+        Logger.LogInformation("Sending user message to: {Endpoint}", ResponseClient.Endpoint);
+        Logger.LogInformation("Sending user message to OpenAI: {UserMessage}", userMessage.Text);
+
         await foreach (var update in ResponseClient.CreateResponseStreamingAsync(responseItems, ResponseOptions, currentResponseCancellation.Token))
         {
             responseText += responseItems.AddResponse(update);
             ChatMessageItem.NotifyChanged(currentResponseMessage);
         }
+
+        Logger.LogInformation("Completed response from OpenAI: {ResponseText}", responseText);
 
         // Store the final response in the conversation, and begin getting suggestions
         currentResponseMessage.Content = [ responseText ];
