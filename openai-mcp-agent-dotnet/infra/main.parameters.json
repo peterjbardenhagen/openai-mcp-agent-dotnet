@@ -1,0 +1,48 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "environmentName": {
+        "value": "${AZURE_ENV_NAME}"
+      },
+      "location": {
+        "value": "${AZURE_LOCATION}"
+      },
+      "mcpTodoClientAppExists": {
+        "value": "${SERVICE_MCPTODO_CLIENTAPP_RESOURCE_EXISTS=false}"
+      },
+      "mcpTodoServerAppExists": {
+        "value": "${SERVICE_MCPTODO_SERVERAPP_RESOURCE_EXISTS=false}"
+      },
+      "principalId": {
+        "value": "${AZURE_PRINCIPAL_ID}"
+      },
+      "useLogin": {
+        "value": "${USE_LOGIN=true}"
+      },
+      "gptModelName": {
+        "value": "${GPT_MODEL_NAME=gpt-5-mini}"
+      },
+      "enableMcpServerDevelopmentMode": {
+        "value": "${ENABLE_MCP_SERVER_DEVELOPMENT_MODE=false}"
+      },
+      "mcpServerIngressPort": {
+        "value": "${MCP_SERVER_INGRESS_PORT=3000}"
+      },
+      "jwtAudience": {
+        "value": "${JWT_AUDIENCE}"
+      },
+      "jwtIssuer": {
+        "value": "${JWT_ISSUER}"
+      },
+      "jwtExpiry": {
+        "value": "${JWT_EXPIRY}"
+      },
+      "jwtSecret": {
+        "value": "${JWT_SECRET}"
+      },
+      "jwtToken": {
+        "value": "${JWT_TOKEN}"
+      }
+    }
+}
