@@ -51,7 +51,7 @@ param gptModelName string = 'gpt-5-mini'
 @description('GPT model version')
 param gptModelVersion string = '2025-08-07'
 @description('GPT deployment capacity')
-param gptCapacity int = 10
+param gptCapacity int = 0
 
 @description('The JWT audience for auth.')
 @secure()
